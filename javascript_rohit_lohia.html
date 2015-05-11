@@ -1,0 +1,152 @@
+<html>
+   <head>
+		<style>
+          table, th, td {
+              border: 1px solid black;
+          }
+      </style>
+      <title>Javascript Assignment</title>
+      <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<script type="text/javascript"
+          src="https://www.google.com/jsapi?autoload={
+            'modules':[{
+              'name':'visualization',
+              'version':'1',
+              'packages':['corechart']
+            }]
+          }"></script>
+      <script type="text/javascript" language="javascript">
+		//This function calculates the minimum and maximum temperature of every day
+         $(document).ready(function() {
+            $("#driver").click(function(event){
+               $.getJSON('http://api.openweathermap.org/data/2.5/forecast/city?id=1277333&APPID=1111111111', function(jd) {
+					var minTemp=jd.list[0].main.temp_min;
+					var maxTemp=jd.list[0].main.temp_max;
+					var date1=jd.list[0].dt_txt;
+					var minTime=date1.slice(11,19);
+					var maxTime=minTime;
+					date1=date1.slice(0,10);
+					$('#stage').html("<p> Max And Min Date For Different Dates <p>");
+					var curr_date1;
+					for (var i = 1; i < jd.list.length; i++) {
+						curr_date1=jd.list[i].dt_txt;
+						curr_date1=curr_date1.slice(0,10);
+						if(curr_date1==date1){
+							//if temp_min is less than minTemp, then temp_min is the minimum temperature
+							if(jd.list[i].main.temp_min < minTemp){
+								minTemp = jd.list[i].main.temp_min;
+								var current_time=jd.list[i].dt_txt;
+								current_time=current_time.slice(11,19);
+								minTime=current_time;
+							}
+							//if temp_max is less than maxTemp, then temp_max is the maximum temperature
+							if(jd.list[i].main.temp_max > maxTemp){
+								maxTemp = jd.list[i].main.temp_max;
+								var current_time1=jd.list[i].dt_txt;
+								current_time1=current_time1.slice(11,19);
+								maxTime=current_time1;
+							}
+						}
+						else{
+							//if we found a new date
+							$('#stage').append('<p> Temperature for date '+date1+' Min : '+minTemp+ '('+minTime+') &nbsp;&nbsp; Max: '+maxTemp+'('+maxTime+')</p>');
+							maxTemp=jd.list[i].main.temp_max;
+							minTemp=jd.list[i].main.temp_min;
+							date1=curr_date1;
+						}
+					}
+					$('#stage').append('<p> Temperature for date '+date1+' Min : '+minTemp+ '('+minTime+') &nbsp;&nbsp; Max: '+maxTemp+'('+maxTime+')</p>');
+					
+               });
+            });
+			
+			//this function calculates temperature array in increasing order and creates a graph for the last date
+			$("#driver2").click(function(event){
+               $.getJSON('http://api.openweathermap.org/data/2.5/forecast/city?id=1277333&APPID=1111111111', function(jd) {
+				  var temp= [];
+				  var date2=jd.list[0].dt_txt;
+				  var time;
+				  var curr_date2;
+				  var index=0;
+				  date2=date2.slice(0,10);
+				  $('#stage2').html("<p> Arrays of temperature are <p>");
+				  for(var k = 0; k<jd.list.length; k++){
+						curr_date2=jd.list[k].dt_txt;
+						time=curr_date2.slice(11,19);
+						curr_date2=curr_date2.slice(0,10);
+						if(curr_date2==date2){
+							temp[index]={"tempe": jd.list[k].main.temp, "time": time};
+						}
+						else{
+								temp.sort(function(a, b){
+									return a.tempe-b.tempe;
+								})
+								$('#stage2').append("<p>Temperature in increasing order for date "+date2+"</p>");
+								$('#stage2').append("<table>");
+								$('#stage2').append("<tr><th>Temp</th><th>Time</th></tr>");
+								for(var l=0; l<temp.length; l++){
+									$('#stage2').append("<tr border=1><td>"+temp[l].tempe+"</td> <td>"+temp[l].time+"</td></tr> ");
+								}
+								$('#stage2').append("</table><br></br>");
+								date2=curr_date2;
+								temp=[];
+								temp[0]={"tempe":jd.list[k].main.temp,"time":time};
+								index=0;
+						}
+						index=index+1;
+					
+				  }
+				  temp.sort(function(a, b){
+						return a.tempe-b.tempe;
+					})
+					$('#stage2').append("<p>Temperature in increasing order for date "+date2+"</p>");
+					$('#stage2').append("<table>");
+					$('#stage2').append("<tr><th>Temp</th><th>Time</th></tr>");
+					for(var t=0; t<temp.length; t++){
+						$('#stage2').append("<tr border=1><td>"+temp[t].tempe+"</td> <td>"+temp[t].time+"</td></tr> ");
+					}
+					var graph_data=[];
+					graph_data[0]=['Temp', 'Time'];
+					var jo=1;
+					for(var e=0; e<temp.length; e++){
+						//$('#stage2').append(temp[e].tempe+" "+temp[e].time+" ");
+						var timee=temp[e].time;
+						timee=timee.slice(0,2);
+						timee=parseInt(timee,10);
+						graph_data[jo]=[temp[e].tempe,timee];
+						jo=jo+1;
+					}
+					
+					//Google visualization api is used here to create a graph.
+					var data = google.visualization.arrayToDataTable(graph_data);
+
+					var options = {
+					title: 'Temperature vs Time for date '+date2
+					};
+
+					var chart = new google.visualization.LineChart(document.getElementById('chart'));
+
+					chart.draw(data, options);	
+				 
+               });
+            });
+         });
+		 
+      </script>
+   </head>
+	
+   <body>
+	
+      <p>Click on the Load Temperature Data to Find Minimum and Maximum Temperature</p>
+		<p> Click on Temperature Array to find Arrays of Temperature with time along with the Graph </p>
+		
+      <input type="button" id="driver" value="Load Temperature Data" />
+		
+		<input type="button" id="driver2" value="Temperature Array" />
+		<div id="stage" style="background-color:#cc0;"></div>
+
+		<div id="stage2" style="background-color:#cc0;"></div>
+	<div id="chart" style="width: 900px; height: 500px"></div>
+	  </body>
+	
+</html>
